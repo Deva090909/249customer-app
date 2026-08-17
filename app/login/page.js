@@ -11,17 +11,51 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Demo mode: this is a sales/preview build, so any email + password on
+  // this form logs in — it's silently routed to one shared demo account
+  // (auto-created on first use) rather than requiring real signup.
+  const DEMO_EMAIL = "demo@cleancar.app";
+  const DEMO_PASSWORD = "cleancar-demo-2026";
+
   async function handleLogin(e) {
     e.preventDefault();
     setLoading(true);
     setError("");
     const supabase = supabaseBrowser();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
+
+    let { error: signInError } = await supabase.auth.signInWithPassword({
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+    });
+
+    if (signInError) {
+      // Demo account doesn't exist yet on this Supabase project — create it once.
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        options: { data: { first_name: "Priya" } },
+      });
+      if (signUpError) {
+        setLoading(false);
+        setError(signUpError.message);
+        return;
+      }
+      // If email confirmation is off, signUp already returns a session.
+      // If it's on, try signing in again in case it auto-confirmed anyway.
+      const retry = await supabase.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+      if (retry.error) {
+        setLoading(false);
+        setError(
+          "Demo account created — if email confirmation is enabled on this Supabase project, disable it under Authentication → Providers to allow instant demo login."
+        );
+        return;
+      }
     }
+
+    setLoading(false);
     router.push("/home");
     router.refresh();
   }
@@ -30,7 +64,7 @@ export default function LoginPage() {
     <div className="p-6 flex flex-col gap-5 min-h-screen justify-center">
       <div>
         <h1 className="font-bold text-2xl text-ink">24/9 Carwashing</h1>
-        <p className="text-sm text-accent-600 mt-1">Log in to book your next wash.</p>
+        <p className="text-sm text-accent-600 mt-1">Demo mode — enter anything and log in.</p>
       </div>
       <form onSubmit={handleLogin} className="flex flex-col gap-3">
         <div>
