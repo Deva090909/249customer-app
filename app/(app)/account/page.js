@@ -30,7 +30,7 @@ export default function AccountPage() {
 
   async function logout() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/home");
     router.refresh();
   }
 

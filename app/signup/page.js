@@ -41,10 +41,10 @@ export default function SignupPage() {
       <div className="p-6 flex flex-col gap-3 min-h-screen justify-center text-center">
         <h1 className="font-bold text-xl">Check your inbox</h1>
         <p className="text-sm text-accent-600">
-          We sent a confirmation link to {email}. Confirm it, then log in.
+          We sent a confirmation link to {email}. Confirm it, then continue.
         </p>
-        <Link href="/login" className="btn-primary mt-2">
-          Go to Login
+        <Link href="/home" className="btn-primary mt-2">
+          Continue to App
         </Link>
       </div>
     );
@@ -76,8 +76,8 @@ export default function SignupPage() {
       </form>
       <p className="text-sm text-accent-600 text-center">
         Already have an account?{" "}
-        <Link href="/login" className="text-accent-500 font-semibold">
-          Log in
+        <Link href="/home" className="text-accent-500 font-semibold">
+          Go to app
         </Link>
       </p>
     </div>
