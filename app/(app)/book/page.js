@@ -4,6 +4,16 @@ import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 import { detectCategory, tierFor, priceForTier, TIME_SLOTS } from "@/lib/pricing";
 
+const PLAN_ICONS = {
+  BASIC: "🧽",
+  PREMIUM: "🫧",
+  DELUXE: "💎",
+  EXPRESS_WASH: "🚿",
+  SMART_WASH: "✨",
+  ELITE_WASH: "👑",
+};
+const DEFAULT_PLAN_ICON = "🚗";
+
 export default function BookPage() {
   const supabase = supabaseBrowser();
   const router = useRouter();
@@ -47,6 +57,15 @@ export default function BookPage() {
       setScheduledDate(tmr.toISOString().split("T")[0]);
       const { data: prof } = await supabase.from("profiles").select("*").eq("id", user.id).single();
       if (prof) setAddress({ line1: prof.address_line1 || "", area: prof.address_area || "", pin: prof.address_pin || "" });
+
+      const couponCode = new URLSearchParams(window.location.search).get("coupon");
+      if (couponCode) {
+        const { data: cp } = await supabase.from("coupons").select("*").eq("code", couponCode.toUpperCase()).eq("active", true).maybeSingle();
+        if (cp) {
+          setAppliedCoupon(cp);
+          setCouponInput(cp.code);
+        }
+      }
     })();
   }, []);
 
@@ -214,6 +233,23 @@ export default function BookPage() {
             </div>
           </div>
 
+          {serviceType && category && (
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-accent-600">
+                {serviceType === "onetime" ? "Available washes" : "Available plans"}
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {plansForType.map((p) => (
+                  <div key={p.id} className="card text-center py-3">
+                    <div className="text-xl">{PLAN_ICONS[p.id] || DEFAULT_PLAN_ICON}</div>
+                    <p className="text-xs font-semibold mt-1">{p.name}</p>
+                    <p className="text-sm font-bold mt-0.5">₹{priceForTier(p, tier)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             disabled={!category || !serviceType || (addingNew && (!newVehicle.brand || !newVehicle.reg))}
             onClick={() => setStep(2)}
@@ -231,7 +267,7 @@ export default function BookPage() {
             const price = priceForTier(p, tier);
             const selected = selectedPlan === p.id;
             return (
-              <button key={p.id} onClick={() => setSelectedPlan(p.id)} className={`card text-left ${selected ? "border border-accent-400" : ""}`}>
+              <button key={p.id} onClick={() => { setSelectedPlan(p.id); setStep(3); }} className={`card text-left ${selected ? "border border-accent-400" : ""}`}>
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2">

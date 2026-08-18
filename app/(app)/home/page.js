@@ -13,6 +13,7 @@ export default function HomePage() {
   const [plan, setPlan] = useState(null);
   const [trackOpen, setTrackOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [offers, setOffers] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -54,6 +55,10 @@ export default function HomePage() {
         const { data: pl } = await supabase.from("plans").select("*").eq("id", sub.plan_id).single();
         setPlan(pl);
       }
+
+      const { data: cp } = await supabase.from("coupons").select("*").eq("active", true);
+      setOffers(cp || []);
+
       setLoading(false);
     })();
   }, []);
@@ -154,6 +159,27 @@ export default function HomePage() {
         <div className="card text-center py-8">
           <p className="text-sm text-accent-600">No upcoming washes yet.</p>
           <Link href="/book" className="btn-secondary mt-3 inline-flex">Book your first wash</Link>
+        </div>
+      )}
+
+      {offers.length > 0 && (
+        <div>
+          <div className="font-bold text-sm mb-2">Offers For You</div>
+          <div className="flex flex-col gap-2">
+            {offers.map((o) => (
+              <div key={o.code} className="card flex justify-between items-center gap-3">
+                <div>
+                  <p className="text-sm font-semibold">{o.code}</p>
+                  <p className="text-xs text-accent-600 mt-0.5">
+                    {o.pct > 0 ? `${o.pct}% off your next wash` : `₹${o.discount} off your next wash`}
+                  </p>
+                </div>
+                <Link href={`/book?coupon=${o.code}`} className="btn-secondary text-xs whitespace-nowrap">
+                  Book now
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
